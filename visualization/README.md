@@ -1,5 +1,7 @@
 # Visualization
 
+This repository includes an interactive visualization. This allows you to view the 'evolution' of the algorithm's solution by showing the genome of the most-fit invididual in the population for each generation. Note that most generations do not actually improve the fitness of the population, so the visualization will only display genomes that are improvements over the previous generation's most-fit individual.
+
 To view the visualization run ``server.bat`` then open [`localhost:9001`](http://localhost:9001/) in a web browser (preferably Chrome).
 
 Note that the visualization has only been tested on Chrome versions above v44, although it should work on most modern browsers.

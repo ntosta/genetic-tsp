@@ -14,11 +14,20 @@ Also included is an interactive visualization! This allows you to view the progr
 
 ## Todo
 
-- Cleanup comments, whitespace, etc.
-- Add necessary visual studio files to git repository
+- Add a build system (this was originally a Visual Studio project and developed on Windows, I may add the necessary VS files or I may add GNU Makefiles and tweak the program to run on Unix instead of Windows).
+- Fix hard-coded paths and filesystem/environment assumptions
 - Usability improvements (command-line input for simulation parameters)
-- Add 'crossover' or 'sexual' mutations to hopefully improve results and algorithm convergence
 - Performance improvements
+
+Algorithm Ideas:
+- Add 'crossover' or 'sexual' mutations to hopefully improve results and algorithm convergence
+- make num_passed_genomes_ vary
+  - pass a number of genomes within some percentage (like 10%) of the most fit individual
+  - pass fewer genomes as the number of generations increases
+
+Longer-term ideas:
+- clustering of points to create sub-problems (to tackle large graphs)
+- mutate some number of genomes completely separately, then around when they begin to converge combine them with some sort of crossover or mate function and then continue normally (essentially create parallel sub-simulations)
 
 ### Credits
 
