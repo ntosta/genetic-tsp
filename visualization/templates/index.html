@@ -1,0 +1,315 @@
+<!--
+// Nick Tosta
+// Based on code by Brandon Duffany
+// August 2015
+
+// Contains the HTML, CSS, and Javascript for the genetic algorithm visualizer
+// Uses the D3 library to create the actual visualization window as an svg
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Genetic Algorithm Visualization</title>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+  <style>
+
+html, body {
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.wrap {
+  display: flex;
+}
+
+.section {
+  height: 100vh;
+  padding: 16px;
+}
+
+.controls-section {
+  background: #f3f3f3;
+}
+
+.controls {
+  background: white;
+  border-radius: 2px;
+  box-shadow: 0px 2px 2px rgba(0,0,0,0.2);
+  margin-top: 16px;
+}
+
+.controls-head {
+  border-bottom: 1px solid #eee;
+}
+
+.controls > div {
+  padding: 8px 16px;
+}
+
+.src-sel {
+  background: white;
+  border-radius: 2px;
+  box-shadow: 0px 2px 2px rgba(0,0,0,0.2);
+}
+
+.src-sel-head {
+  border-bottom: 1px solid #eee;
+}
+
+.src-sel > div {
+  padding: 8px 16px;
+}
+
+.visualization-section {
+  width: 600px;
+}
+
+svg.viz {
+  border: 1px solid gray;
+  box-sizing: border-box;
+  height: 600px;
+  width: 100%;
+}
+
+.progress-bar {
+  height: 4px;
+  width: 100%;
+}
+
+.progress {
+  background-color: #3369E8;
+  height: 100%;
+}
+
+.gen-slider {
+  width: 100%;
+  padding: 0px;
+  padding-top: 3px;
+  margin: 0px;
+  border: 0px;
+}
+
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="section controls-section">
+
+      <div>
+        <div class="src-sel">
+          <div class="src-sel-head">Data Source</div>
+          <div>
+            <select class="inputs"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="src-sel-head">Controls</div>
+        <div>
+          <button type="button" style="width:80px;margin-bottom:4px" onclick="runVisualizationForSelectedEntry();">Animate</button> </br>
+          <button type="button" style="width:80px;margin-bottom:4px" onclick="resetVisualizationForSelectedEntry();">Reset</button> </br>
+          <input class="animation-speed" style="width:77px;margin-bottom:4px" type="text" value="700">
+        </div>
+      </div>
+
+    </div>
+    <div class="section visualization-section">
+      <svg class="viz">
+      <!-- Flip coordinate system -->
+        <g transform="translate(0, 600)">
+          <g transform="scale(1, -1)" class="main"></g>
+        </g>
+      </svg>
+      <div class="progress-bar">
+        <div class="progress"></div>
+      </div>
+      <input class="gen-slider" type="range" min="-1" max="2000"></input>
+      <div class="gen-label">Generation: <span class="gen-value">0</span></div>
+      <div class="fitness-label">Fitness: <span class="fitness-value">0</span></div>
+    </div>
+  </div>
+
+  <script>
+
+var POINT_RADIUS = 4;
+var LINE_WIDTH = 2;
+var POINT_COLOR = 'gray';
+var LINE_COLOR = 'red';
+var FRAME_DURATION_MS = 300;
+
+//Global variable so that the left/right arrow keybindings know what to
+//tell the visalization to display
+//-1 means we default to just displaying the points
+var current_genome_index = -1;
+
+// This is the data output by the genetic algorithm
+// The server parses the output file into JSON
+var data = {{ data }};
+
+var $inputs = $('.inputs');
+
+var entryMap = {};
+
+data.forEach(function(entry) {
+  var option =  $('<option/>')
+    .text(entry.name)
+    .val(entry.name)
+    .attr('entry', entry);
+  entryMap[entry.name] = entry;
+  $inputs.append(option);
+});
+
+var getSelectedEntry = function() {
+  return entryMap[$inputs.find(':selected').val()];
+}
+
+var createSlider = function(entry) {
+  var entry = getSelectedEntry();
+  $(".gen-slider").attr('max', entry.fitnesses.length);
+  $(".gen-slider").val(0);
+};
+
+
+var resetVisualizationForSelectedEntry = function() {
+  var entry = getSelectedEntry();
+  createSlider(entry);
+  clearTimeout(timeout);
+  main.selectAll("*").remove();
+  setProgress(0);
+  $(".gen-value").text("-");
+  $(".fitness-value").text("-");
+
+  plotPoints(entry.points, POINT_COLOR);
+}
+
+var runVisualizationForSelectedEntry = function() {
+  var entry = getSelectedEntry();
+  FRAME_DURATION_MS = $(".animation-speed").val();
+  runVisualization(entry.points, entry.genomes);
+}
+
+$inputs.change(resetVisualizationForSelectedEntry);
+
+
+//Bind the slider so that when the mouse moves it
+//the visualization will display the evolution closest to
+//the slider's position
+$(".gen-slider").on('input', function() {
+  var entry = getSelectedEntry();
+  var value = +$(".gen-slider").val();
+
+  if (value == -1) {
+    resetVisualizationForSelectedEntry();
+    return;
+  }
+
+  //Find the index of the evolution closest to the slider's position
+  var i = 0;
+  while (value >= entry.genomes[i].generation && i < entry.genomes.length) {
+    i++;
+  }
+
+  //Snap the slider to the nearest evolution
+  $(".gen-slider").val(entry.genomes[i-1].generation);
+  //Display the genome
+  plotGenome(entry.points, entry.genomes[i-1], LINE_COLOR);
+});
+
+
+
+var main = d3.select('.main');
+
+var plotPoints = function(points, color) {
+  main.selectAll("circle")
+    .data(points)
+    .enter()
+    .append("circle")
+    .attr("cx", function(p) { return p.x })
+    .attr("cy", function(p) { return p.y })
+    .attr("r", POINT_RADIUS)
+    .style("fill", color);
+}
+
+// TODO: smooth animation
+var plotGenome = function(points, genome, color) {
+
+  var lines = [];
+  var indices = genome.indices;
+  var generation = genome.generation;
+  var fitness = genome.fitness;
+
+  for (var i = 0; i < indices.length - 1; i++) {
+    lines.push({
+      x1: points[indices[i]].x,
+      y1: points[indices[i]].y,
+      x2: points[indices[i + 1]].x,
+      y2: points[indices[i + 1]].y,
+    });
+  }
+
+  //Add the line from the last point back to the starting point
+  lines.push({
+    x1: points[indices[indices.length-1]].x,
+    y1: points[indices[indices.length-1]].y,
+    x2: points[indices[0]].x,
+    y2: points[indices[0]].y,
+  });
+
+  main.selectAll("line").remove();
+  main.selectAll("line")
+    .data(lines)
+    .enter()
+    .append("line")
+    .attr("x1", function(line) { return line.x1; })
+    .attr("y1", function(line) { return line.y1; })
+    .attr("x2", function(line) { return line.x2; })
+    .attr("y2", function(line) { return line.y2; })
+    .style("stroke", color)
+    .style("stroke-width", LINE_WIDTH);
+
+  //Update the values for the generation and fitness labels
+  $(".gen-value").text(generation);
+  $(".fitness-value").text(fitness);
+}
+
+var timeout = null;
+
+
+var setProgress = function(progress) {
+  $(".progress").css({'width': Math.floor(progress * 100) + '%'});
+}
+
+// [points] is a list of objects of the form {x, y}.
+// [genomes] is a list of lists of indices into the [points] array.
+var runVisualization = function(points, genomes) {
+  // Reset the svg contents
+  clearTimeout(timeout);
+  main.selectAll("*").remove();
+  setProgress(0);
+
+  plotPoints(points, POINT_COLOR);
+
+  var i = 0;
+  var step = function() {
+    plotGenome(points, genomes[i], LINE_COLOR);
+    setProgress((i+1)/genomes.length);
+    $(".gen-slider").val(genomes[i].generation);
+    i++;
+    if (i < genomes.length) {
+      timeout = setTimeout(step, FRAME_DURATION_MS);
+    }
+  };
+  step();
+}
+
+resetVisualizationForSelectedEntry();
+
+  </script>
+</body>
+</html>
