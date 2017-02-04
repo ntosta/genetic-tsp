@@ -8,26 +8,29 @@ The algorithm creates a random population of individuals; their genomes consist 
 
 The genetic algorithm's implementation can be found in ``src/`` as ``main.cpp``, ``tsp.cpp``, and ``darwin.cpp``.
 
+## Environment and Building
+
+The genetic simulation itself was created in Visual Studio C++ as a Win32 Console Application. The necessary Visual Studio project files can be found in ``genetic-tsp/``.
+
 ## Visualization
 
 Also included is an interactive visualization! This allows you to view the progress of algorithm by displaying the most-fit individual in the population for each generation. For more information see the README in ``visualization/``.
 
 ## Todo
 
-- Add a build system (this was originally a Visual Studio project and developed on Windows, I may add the necessary VS files or I may add GNU Makefiles and tweak the program to run on Unix instead of Windows).
-- Fix hard-coded paths and filesystem/environment assumptions
 - Usability improvements (command-line input for simulation parameters)
 - Performance improvements
+- Fix filesystem/environment assumptions; maybe add GNU Makefiles and modify the code to be completely cross-platform.
 
 Algorithm Ideas:
 - Add 'crossover' or 'sexual' mutations to hopefully improve results and algorithm convergence
-- make num_passed_genomes_ vary
-  - pass a number of genomes within some percentage (like 10%) of the most fit individual
-  - pass fewer genomes as the number of generations increases
+- Make num_passed_genomes_ vary
+  - Pass a number of genomes within some percentage (like 10%) of the most fit individual
+  - Pass fewer genomes as the number of generations increases
 
 Longer-term ideas:
-- clustering of points to create sub-problems (to tackle large graphs)
-- mutate some number of genomes completely separately, then around when they begin to converge combine them with some sort of crossover or mate function and then continue normally (essentially create parallel sub-simulations)
+- Clustering of points to create sub-problems (to tackle large graphs)
+- Mutate some number of genomes completely separately, then around when they begin to converge combine them with some sort of crossover or mate function and then continue normally (essentially create parallel sub-simulations)
 
 ### Credits
 

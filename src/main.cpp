@@ -19,7 +19,7 @@ int main() {
 	srand(time(NULL));
 
 	// Initialize TSP object
-	TSP tsp = TSP("input/points40.txt");
+	TSP tsp = TSP("../../input/points50.txt");
 
 	// Initialize Darwin object
 	Darwin darwin = Darwin(&tsp, 100, 10, 1000);
@@ -39,7 +39,7 @@ int main() {
 	// Print the top fitness values and output the results of the simulation
 	// to a file
 	darwin.print_fitnesses(10);
-	darwin.output_genomes();
+	darwin.output_genomes("../../output/");
 
 	cout << "Simulation duration: " << elapsed_seconds.count() << endl;
 	cout << endl << "Program end" << endl;

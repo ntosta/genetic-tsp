@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <ctime>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -312,7 +313,7 @@ void Darwin::print_population() {
 }
 
 // Print the top fitness values to cout
-// Arguments (1):
+// Arguments (1, optional):
 //  Amount: number of fitness values to print
 void Darwin::print_fitnesses(int amount) {
 	if (amount == -1) {
@@ -327,8 +328,17 @@ void Darwin::print_fitnesses(int amount) {
 	cout << endl;
 }
 
-// Output the results of the genetic algorithm to an output file in output/
-void Darwin::output_genomes() {
+// Output the results of the genetic algorithm to an output file
+// Arguments (1):
+//  outdir: a string containing the directory to output the file to
+void Darwin::output_genomes(string outdir) {
+
+	// Check that the outdir exists, if not create it
+	namespace fs = std::tr2::sys;
+	fs::path outpath = outdir;
+	if (!fs::exists(outpath)) {
+		fs::create_directory(outpath);
+	}
 
 	// Generate a filename based on the current date/time
 	time_t t = time(0);
@@ -336,9 +346,10 @@ void Darwin::output_genomes() {
 	ostringstream ss;
 	ss << "out_" << num_genes_ << "_" << put_time(now, "%y-%m-%d_%H-%M-%S") << ".txt";
 	string outfile_name(ss.str());
-	ofstream outfile("../output/" + outfile_name);
 
-	cout << "Writing output data to: " << outfile_name << endl;
+	// Create the output file
+	ofstream outfile(outdir + outfile_name);
+	cout << "Writing output data to: " << outfile_name << " in " << outdir << endl;
 
 	// Write the points to the output file
 	outfile << "points\n"; //  spacer for parsing the data

@@ -25,7 +25,6 @@ TSP::TSP(string filename) : filename_(filename) {
 // Read the points from a file, store them in the x and y vectors
 void TSP::read_points(string filename) {
 
-	filename = "../genetic_TSP/" + filename;
 	ifstream file(filename);
 	string line, xVal, yVal;
 

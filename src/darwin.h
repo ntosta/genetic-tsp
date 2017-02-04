@@ -53,9 +53,7 @@ public:
 
 	// Simulation functions
 	void create_random_population();
-
 	void run_simulation();
-
 	void calculate_fitness();
 	void sort_population();
 
@@ -69,7 +67,7 @@ public:
 	void print_population();
 	void print_fitnesses(int amount = -1);
 
-	void output_genomes();
+	void output_genomes(string outdir);
 };
 
 #endif
